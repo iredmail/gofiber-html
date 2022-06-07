@@ -14,7 +14,9 @@ func Index(c *fiber.Ctx) error {
 }
 ```
 
-And in html template file, you must specify the layout template file too:
+And in html template file, you must specify the layout template file with file
+extension (the `.gohtml` extension is defined when you initialize this module,
+we use `.gohtml` here for example):
 ```html
 {{template "layout.gohtml"}}
 
