@@ -1,3 +1,3 @@
-module github.com/iredmail/gofiber-html
+module github.com/spiderd-io/gofiber-html
 
 go 1.16
