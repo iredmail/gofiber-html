@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -58,7 +60,6 @@ func NewFileSystem(fs fs.FS, extension string) *Engine {
 	engine := &Engine{
 		left:       "{{",
 		right:      "}}",
-		directory:  "/",
 		fileSystem: fs,
 		extension:  extension,
 		layout:     "embed",
@@ -131,6 +132,7 @@ func (e *Engine) Load() error {
 	return nil
 }
 
+// appendTemplate reference `template.ParseFiles()`
 func (e *Engine) appendTemplate(key string, filenames ...string) (tmpl *template.Template, err error) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
@@ -141,18 +143,35 @@ func (e *Engine) appendTemplate(key string, filenames ...string) (tmpl *template
 		paths = append(paths, pth)
 	}
 
-	t := template.New(key)
-	t.Delims(e.left, e.right)
-	t.Funcs(e.funcmap)
-	if e.fileSystem != nil {
-		tmpl, err = t.ParseFS(e.fileSystem, paths...)
-		if err != nil {
-			return
+	for _, pth := range paths {
+		var name string
+		var b []byte
+		if e.fileSystem != nil {
+			name, b, err = readFileFS(e.fileSystem, pth)
+		} else {
+			name, b, err = readFileOS(pth)
 		}
-	} else {
-		tmpl, err = t.ParseFiles(paths...)
+
 		if err != nil {
-			return
+			return nil, err
+		}
+		var t *template.Template
+		if tmpl == nil {
+			tmpl = template.New(name)
+			tmpl.Delims(e.left, e.right)
+			tmpl.Funcs(e.funcmap)
+		}
+
+		if name == tmpl.Name() {
+			t = tmpl
+		} else {
+			t = tmpl.New(name)
+		}
+
+		s := string(b)
+		_, err = t.Parse(s)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -186,4 +205,18 @@ func (e *Engine) Render(out io.Writer, template string, binding interface{}, lay
 	}
 
 	return tmpl.Execute(out, binding)
+}
+
+func readFileOS(file string) (name string, b []byte, err error) {
+	name = filepath.Base(file)
+	b, err = os.ReadFile(file)
+
+	return
+}
+
+func readFileFS(fsys fs.FS, file string) (name string, b []byte, err error) {
+	name = path.Base(file)
+	b, err = fs.ReadFile(fsys, file)
+
+	return
 }

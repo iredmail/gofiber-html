@@ -25,9 +25,6 @@ func trim(str string) string {
 
 func Test_Render(t *testing.T) {
 	engine := New("./views", ".html")
-	engine.AddFunc("isAdmin", func(user string) bool {
-		return user == "admin"
-	})
 	if err := engine.Load(); err != nil {
 		t.Fatalf("load: %v\n", err)
 	}
@@ -217,10 +214,14 @@ func Test_FileSystem(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	engine.Render(&buf, "index", map[string]interface{}{
+	err = engine.Render(&buf, "index", map[string]interface{}{
 		"Title": "Hello, World!",
-	}, "layouts/main")
-	expect := `<!DOCTYPE html><html><head><title>Main</title></head><body><h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2></body></html>`
+	}, "partials/header", "partials/footer")
+	if err != nil {
+		t.Fatalf("render: %v\n", err)
+	}
+
+	expect := `<h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2>`
 	result := trim(buf.String())
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
