@@ -1,180 +1,38 @@
-# HTML
+# gofiber-html
 
-HTML is the official Go template engine [html/template](https://golang.org/pkg/html/template/), to see the original syntax documentation please [click here](TEMPLATES_CHEATCHEET.md)
+`gofiber-html` uses the Go builtin `html/template` as [Fiber](https://gofiber.io) template engine. Here's the [original syntax of `html/template`](TEMPLATES_CHEATCHEET.md)
 
-### Basic Example
+Check the sample app in `example/` directory to get start.
 
-_**./views/index.html**_
-```html
-{{template "partials/header" .}}
-
-<h1>{{.Title}}</h1>
-
-{{template "partials/footer" .}}
-```
-_**./views/partials/header.html**_
-```html
-<h2>Header</h2>
-```
-_**./views/partials/footer.html**_
-```html
-<h2>Footer</h2>
-```
-_**./views/layouts/main.html**_
-```html
-<!DOCTYPE html>
-<html>
-
-<head>
-  <title>Main</title>
-</head>
-
-<body>
-  {{embed}}
-</body>
-
-</html>
-```
+With `gofiber-html`, you must specify layout file name in `ctx.Render()` and
+template files. For example:
 
 ```go
-package main
-
-import (
-	"log"
-	
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html"
-)
-
-func main() {
-	// Create a new engine
-	engine := html.New("./views", ".html")
-
-  // Or from an embedded system
-  // See github.com/gofiber/embed for examples
-  // engine := html.NewFileSystem(http.Dir("./views", ".html"))
-
-	// Pass the engine to the Views
-	app := fiber.New(fiber.Config{
-		Views: engine,
-	})
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		// Render index
-		return c.Render("index", fiber.Map{
-			"Title": "Hello, World!",
-		})
-	})
-
-	app.Get("/layout", func(c *fiber.Ctx) error {
-		// Render index within layouts/main
-		return c.Render("index", fiber.Map{
-			"Title": "Hello, World!",
-		}, "layouts/main")
-	})
-
-	log.Fatal(app.Listen(":3000"))
-}
-
-```
-
-### Example with embed.FS
-
-```go
-package main
-
-import (
-    "log"
-    "net/http"
-    "embed"
-
-    "github.com/gofiber/fiber/v2"
-    "github.com/gofiber/template/html"
-)
-
-//go:embed views/*
-var viewsfs embed.FS
-
-func main() {
-    engine := html.NewFileSystem(http.FS(viewsfs), ".html")
-
-    // Pass the engine to the Views
-    app := fiber.New(fiber.Config{
-        Views: engine,
-    })
-
-
-    app.Get("/", func(c *fiber.Ctx) error {
-        // Render index - start with views directory
-        return c.Render("views/index", fiber.Map{
-            "Title": "Hello, World!",
-        })
-    })
-
-    log.Fatal(app.Listen(":3000"))
+func Index(c *fiber.Ctx) error {
+    // Specify the layout template file `layout` (omit the file extension)
+    return c.Render("index", nil, "layout")
 }
 ```
 
-and change the starting point to the views directory
-
-_**./views/index.html**_
+And in html template file, you must specify the layout template file with file
+extension (the `.gohtml` extension is defined when you initialize this module,
+we use `.gohtml` here for example):
 ```html
-{{template "views/partials/header" .}}
+{{template "layout.gohtml"}}
 
-<h1>{{.Title}}</h1>
-
-{{template "views/partials/footer" .}}
+{{define "title"}}Index page{{end}}
 ```
 
-### Example with innerHTML
+## Notes
 
-```go
-package main
+About the `html` module offered by [`gofiber/template`](https://github.com/gofiber/template/tree/master/html)
+repo:
 
-import (
-    "embed"
-    "html/template"
-    "log"
-    "net/http"
+- it can not specify web page title in template files.
 
-    "github.com/gofiber/fiber/v2"
-    "github.com/gofiber/template/html"
-)
-
-//go:embed views/*
-var viewsfs embed.FS
-
-func main() {
-    engine := html.NewFileSystem(http.FS(viewsfs), ".html")
-    engine.AddFunc(
-        // add unescape function
-        "unescape", func(s string) template.HTML {
-            return template.HTML(s)
-        },
-    )
-
-    // Pass the engine to the Views
-    app := fiber.New(fiber.Config{Views: engine})
-
-    app.Get("/", func(c *fiber.Ctx) error {
-        // Render index
-        return c.Render("views/index", fiber.Map{
-            "Title": "Hello, <b>World</b>!",
-        })
-    })
-
-    log.Fatal(app.Listen(":3000"))
-}
-```
-
-and change the starting point to the views directory
-
-_**./views/index.html**_
-```html
-<p>{{ unescape .Title}}</p>
-```
-**html output**
-```html
-<p>Hello, <b>World</b>!</p>
-```
-
+    If you define a template to hold page title like `{{template "title" .}}`
+    in layout file, then define page title like `{{define "title"}}...{{end}}`
+    in each template file, only the one in last parsed template file will be
+    kept and used (earlies ones are overwrote),
+    this is not ideal for
+i18n.
