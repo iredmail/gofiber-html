@@ -20,16 +20,21 @@ func main() {
 	}
 
 	engine := html.NewFileSystem(viewsDir, ".gohtml")
+	engine.AddLayouts("layout")
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Render("index", nil, "layout") // specify layout file
+		return c.Render("index", fiber.Map{
+			"Var1": "value1",
+		})
 	})
 
 	app.Get("/dashboard", func(c *fiber.Ctx) error {
-		return c.Render("dashboard", nil, "layout") // specify layout file
+		return c.Render("dashboard", fiber.Map{
+			"Var2": "value2",
+		})
 	})
 
 	app.Listen(":3000")

@@ -1,6 +1,7 @@
-{{template "layout.gohtml"}}
+{{template "layout.gohtml" .}}
 
 {{define "title"}}Home{{end}}
 {{define "main"}}
     <h2>Home page.</h2>
+    <p>{{.Var1}}</p>
 {{end}}
