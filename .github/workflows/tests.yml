@@ -1,0 +1,47 @@
+name: Run unittests.
+
+on: [push]
+#on:
+#  schedule:
+#    # A complete cython build takes about 14 minutes, let's run it every Monday
+#    # and not waste too much GitHub free resource.
+#    - cron:  '1 1 * * 1'
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
+        go: ['1.18.3']
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - uses: actions/setup-go@v2
+      with:
+        stable: false
+        go-version: ${{ matrix.go }}
+
+    - run: go test ./...
+
+    #- name: golangci-lint
+    #  uses: golangci/golangci-lint-action@v2
+    #  with:
+    #    version: latest
+    #    #version: v2.5.2
+    #    args: --print-issued-lines -c $GITHUB_WORKSPACE/.golangci.yml
+    #    #only-new-issues: false
+    #    skip-go-installation: true
+    #    skip-pkg-cache: false
+    #    skip-build-cache: false
+
+    #- name: Gosec
+    #  uses: securego/gosec@master
+    #  with:
+    #    # we let the report trigger content trigger a failure using the GitHub Security features.
+    #    # G304 (CWE-22): Potential file inclusion via variable (Confidence: HIGH, Severity: MEDIUM)
+    #    #args: '-exclude G304 -no-fail -fmt sarif -out results.sarif ./...'
+    #    args: '-no-fail -nosec -quiet -exclude G101,G304,G402,G404 ./internal/... ./cmd/...'

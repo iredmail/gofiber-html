@@ -1,7 +1,6 @@
 package gofiber_html
 
 import (
-	"fmt"
 	"html/template"
 	"io"
 	"io/fs"
@@ -19,23 +18,20 @@ type Engine struct {
 	right string
 	// views folder
 	directory string
-	// http.FileSystem supports embedded files
+	// fs.FS supports embedded files
 	fileSystem fs.FS
 	// views extension
 	extension string
-	// layout variable name that incapsulates the template
-	layout string
-	// determines if the engine parsed all templates
-	loaded bool
-	// reload on each render
-	reload bool
+	// layouts specifies the layout template files you need frequently, so that you don't need to specify it
+	// in each `ctx.Render()`.
+	layouts []string
 	// debug prints the parsed templates
 	debug bool
 	// lock for funcmap and templates
 	mutex sync.RWMutex
 	// template funcmap
 	funcmap map[string]interface{}
-	// templates
+	// templates are loaded and parsed first time it is called (when client is requesting the web pag).
 	templates map[string]*template.Template
 }
 
@@ -46,12 +42,10 @@ func New(directory, extension string) *Engine {
 		right:     "}}",
 		directory: directory,
 		extension: extension,
-		layout:    "embed",
 		funcmap:   make(map[string]interface{}),
+		templates: make(map[string]*template.Template),
 	}
-	engine.AddFunc(engine.layout, func() error {
-		return fmt.Errorf("layout called unexpectedly.")
-	})
+
 	return engine
 }
 
@@ -62,18 +56,15 @@ func NewFileSystem(fs fs.FS, extension string) *Engine {
 		right:      "}}",
 		fileSystem: fs,
 		extension:  extension,
-		layout:     "embed",
 		funcmap:    make(map[string]interface{}),
+		templates:  make(map[string]*template.Template),
 	}
-	engine.AddFunc(engine.layout, func() error {
-		return fmt.Errorf("layout called unexpectedly.")
-	})
+
 	return engine
 }
 
-// Layout defines the variable name that will incapsulate the template
-func (e *Engine) Layout(key string) *Engine {
-	e.layout = key
+func (e *Engine) AddLayouts(layouts ...string) *Engine {
+	e.layouts = layouts
 	return e
 }
 
@@ -105,34 +96,17 @@ func (e *Engine) AddFuncMap(m map[string]interface{}) *Engine {
 	return e
 }
 
-// Reload if set to true the templates are reloading on each render,
-// use it when you're in development and you don't want to restart
-// the application when you edit a template file.
-func (e *Engine) Reload(enabled bool) *Engine {
-	e.reload = enabled
-	return e
-}
-
 // Debug will print the parsed templates when Load is triggered.
 func (e *Engine) Debug(enabled bool) *Engine {
 	e.debug = enabled
 	return e
 }
 
-// Parse is deprecated, please use Load() instead
-func (e *Engine) Parse() error {
-	fmt.Println("Parse() is deprecated, please use Load() instead.")
-	return e.Load()
-}
-
-// Load reset templates.
+// Load satisfies Fiber's `Template` interface.
 func (e *Engine) Load() error {
-	e.templates = make(map[string]*template.Template)
-
 	return nil
 }
 
-// appendTemplate reference `template.ParseFiles()`
 func (e *Engine) appendTemplate(key string, filenames ...string) (tmpl *template.Template, err error) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
@@ -182,17 +156,13 @@ func (e *Engine) appendTemplate(key string, filenames ...string) (tmpl *template
 
 // Render will execute the template name along with the given values.
 func (e *Engine) Render(out io.Writer, template string, binding interface{}, layout ...string) error {
-	if !e.loaded || e.reload {
-		if e.reload {
-			e.loaded = false
-		}
-		if err := e.Load(); err != nil {
-			return err
-		}
+	filenames := []string{template}
+	if len(layout) > 0 {
+		filenames = append(filenames, layout...)
+	} else {
+		filenames = append(filenames, e.layouts...)
 	}
 
-	filenames := []string{template}
-	filenames = append(filenames, layout...)
 	key := strings.Join(filenames, ",")
 	tmpl, exist := e.templates[key]
 	if exist {

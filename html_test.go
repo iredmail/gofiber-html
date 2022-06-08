@@ -25,20 +25,16 @@ func trim(str string) string {
 
 func Test_Render(t *testing.T) {
 	engine := New("./views", ".html")
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
+	engine.AddLayouts("layouts/main")
 
 	// Partials
 	var buf bytes.Buffer
-	err := engine.Render(&buf, "index", map[string]interface{}{
-		"Title": "Hello, World!",
-	}, "partials/header", "partials/footer")
+	err := engine.Render(&buf, "index", nil)
 	if err != nil {
 		t.Fatalf("render: %v\n", err)
 	}
 
-	expect := `<h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2>`
+	expect := `<!DOCTYPE html><html><head><title>Index</title></head><body><h2>Index</h2></body></html>`
 	result := trim(buf.String())
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
@@ -134,19 +130,15 @@ func Test_AddFuncMap(t *testing.T) {
 
 func Test_Layout(t *testing.T) {
 	engine := New("./views", ".html")
+	engine.AddLayouts("layouts/main")
 
 	engine.AddFunc("isAdmin", func(user string) bool {
 		return user == "admin"
 	})
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
 
 	var buf bytes.Buffer
-	engine.Render(&buf, "index", map[string]interface{}{
-		"Title": "Hello, World!",
-	}, "layouts/main")
-	expect := `<!DOCTYPE html><html><head><title>Main</title></head><body><h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2></body></html>`
+	engine.Render(&buf, "index", nil)
+	expect := `<!DOCTYPE html><html><head><title>Index</title></head><body><h2>Index</h2></body></html>`
 	result := trim(buf.String())
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
@@ -159,15 +151,10 @@ func Test_Empty_Layout(t *testing.T) {
 	engine.AddFunc("isAdmin", func(user string) bool {
 		return user == "admin"
 	})
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
 
 	var buf bytes.Buffer
-	engine.Render(&buf, "index", map[string]interface{}{
-		"Title": "Hello, World!",
-	}, "")
-	expect := `<h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2>`
+	engine.Render(&buf, "empty_layout", nil)
+	expect := `<p>Empty</p>`
 	result := trim(buf.String())
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
@@ -177,23 +164,23 @@ func Test_Empty_Layout(t *testing.T) {
 // Test_Layout_Multi checks if the layout can be rendered multiple times
 func Test_Layout_Multi(t *testing.T) {
 	engine := New("./views", ".html")
+	engine.AddLayouts("layouts/main")
 
 	engine.AddFunc("isAdmin", func(user string) bool {
 		return user == "admin"
 	})
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
 
 	for i := 0; i < 2; i++ {
 		var buf bytes.Buffer
-		err := engine.Render(&buf, "index", map[string]interface{}{
-			"Title": "Hello, World!",
-		}, "layouts/main")
-		expect := `<!DOCTYPE html><html><head><title>Main</title></head><body><h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2></body></html>`
+		err := engine.Render(&buf, "index", nil)
+		if err != nil {
+			t.Fatalf("render: %v\n", err)
+		}
+
+		expect := `<!DOCTYPE html><html><head><title>Index</title></head><body><h2>Index</h2></body></html>`
 		result := trim(buf.String())
 		if expect != result {
-			t.Fatalf("\nExpected:\n%s\nResult:\n%s\n\nError: %s", expect, result, err)
+			t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
 		}
 	}
 
@@ -205,54 +192,19 @@ func Test_FileSystem(t *testing.T) {
 		t.Fatalf("embed: %v\n", err)
 	}
 	engine := NewFileSystem(fsViews, ".html")
+	engine.AddLayouts("layouts/main")
 
 	engine.AddFunc("isAdmin", func(user string) bool {
 		return user == "admin"
 	})
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
 
 	var buf bytes.Buffer
-	err = engine.Render(&buf, "index", map[string]interface{}{
-		"Title": "Hello, World!",
-	}, "partials/header", "partials/footer")
+	err = engine.Render(&buf, "index", nil)
 	if err != nil {
 		t.Fatalf("render: %v\n", err)
 	}
 
-	expect := `<h2>Header</h2><h1>Hello, World!</h1><h2>Footer</h2>`
-	result := trim(buf.String())
-	if expect != result {
-		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)
-	}
-}
-
-func Test_Reload(t *testing.T) {
-	engine := NewFileSystem(embedViews, ".html")
-	engine.Reload(true) // Optional. Default: false
-
-	engine.AddFunc("isAdmin", func(user string) bool {
-		return user == "admin"
-	})
-	if err := engine.Load(); err != nil {
-		t.Fatalf("load: %v\n", err)
-	}
-
-	if err := ioutil.WriteFile("./views/reload.html", []byte("after reload\n"), 0644); err != nil {
-		t.Fatalf("write file: %v\n", err)
-	}
-	defer func() {
-		if err := ioutil.WriteFile("./views/reload.html", []byte("before reload\n"), 0644); err != nil {
-			t.Fatalf("write file: %v\n", err)
-		}
-	}()
-
-	engine.Load()
-
-	var buf bytes.Buffer
-	engine.Render(&buf, "reload", nil)
-	expect := "after reload"
+	expect := `<!DOCTYPE html><html><head><title>Index</title></head><body><h2>Index</h2></body></html>`
 	result := trim(buf.String())
 	if expect != result {
 		t.Fatalf("Expected:\n%s\nResult:\n%s\n", expect, result)

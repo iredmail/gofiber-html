@@ -2,11 +2,11 @@
 <html>
 
 <head>
-  <title>Main</title>
+  <title>{{template "title" .}}</title>
 </head>
 
 <body>
-  {{embed}}
+  {{block "main" .}}{{end}}
 </body>
 
 </html>
