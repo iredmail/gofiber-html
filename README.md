@@ -16,3 +16,5 @@ repo:
     in each template file, only the one in last parsed template file will be
     kept and used (earlies ones are overwrote),
     this is not ideal for i18n.
+
+- it doesn't expose `funcmap`.

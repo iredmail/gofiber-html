@@ -49,7 +49,7 @@ func New(directory, extension string) *Engine {
 	return engine
 }
 
-//NewFileSystem ...
+// NewFileSystem ...
 func NewFileSystem(fs fs.FS, extension string) *Engine {
 	engine := &Engine{
 		left:       "{{",
@@ -175,6 +175,10 @@ func (e *Engine) Render(out io.Writer, template string, binding interface{}, lay
 	}
 
 	return tmpl.Execute(out, binding)
+}
+
+func (e *Engine) FuncMap() map[string]any {
+	return e.funcmap
 }
 
 func readFileOS(file string) (name string, b []byte, err error) {
