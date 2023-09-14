@@ -13,14 +13,14 @@ jobs:
     strategy:
       matrix:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
-        go: ['1.19.1']
+        go: ['>=1.21.1']
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 1
 
-    - uses: actions/setup-go@v2
+    - uses: actions/setup-go@v4
       with:
         stable: false
         go-version: ${{ matrix.go }}
