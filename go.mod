@@ -2,7 +2,7 @@ module github.com/spiderd-io/gofiber-html
 
 go 1.22.0
 
-require github.com/gofiber/fiber/v2 v2.52.1
+require github.com/gofiber/fiber/v2 v2.52.2
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
