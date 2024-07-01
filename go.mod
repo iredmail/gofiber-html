@@ -1,4 +1,4 @@
-module github.com/spiderd-io/gofiber-html
+module github.com/iredmail/gofiber-html
 
 go 1.22.4
 

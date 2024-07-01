@@ -5,7 +5,7 @@ import (
 	"io/fs"
 
 	"github.com/gofiber/fiber/v2"
-	html "github.com/spiderd-io/gofiber-html"
+	html "github.com/iredmail/gofiber-html"
 )
 
 var (
