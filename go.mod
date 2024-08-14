@@ -1,6 +1,6 @@
 module github.com/iredmail/gofiber-html
 
-go 1.22.5
+go 1.23.0
 
 require github.com/gofiber/fiber/v2 v2.52.5
 
