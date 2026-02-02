@@ -2,7 +2,7 @@ module github.com/iredmail/gofiber-html
 
 go 1.25.5
 
-require github.com/gofiber/fiber/v2 v2.52.10
+require github.com/gofiber/fiber/v2 v2.52.11
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
