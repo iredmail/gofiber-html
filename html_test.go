@@ -170,7 +170,7 @@ func Test_Layout_Multi(t *testing.T) {
 		return user == "admin"
 	})
 
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		var buf bytes.Buffer
 		err := engine.Render(&buf, "index", nil)
 		if err != nil {

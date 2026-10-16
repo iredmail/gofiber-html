@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
@@ -89,9 +90,7 @@ func (e *Engine) AddFunc(name string, fn interface{}) *Engine {
 // It is legal to overwrite elements of the default actions
 func (e *Engine) AddFuncMap(m map[string]interface{}) *Engine {
 	e.mutex.Lock()
-	for name, fn := range m {
-		e.funcmap[name] = fn
-	}
+	maps.Copy(e.funcmap, m)
 	e.mutex.Unlock()
 	return e
 }
