@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -41,7 +40,7 @@ func Test_Render(t *testing.T) {
 	}
 	// Single
 	buf.Reset()
-	engine.Render(&buf, "errors/404", map[string]interface{}{
+	engine.Render(&buf, "errors/404", map[string]any{
 		"Error": "404 Not Found!",
 	})
 	expect = `<h1>404 Not Found!</h1>`
@@ -62,7 +61,7 @@ func Test_AddFunc(t *testing.T) {
 
 	// Func is admin
 	var buf bytes.Buffer
-	err := engine.Render(&buf, "admin", map[string]interface{}{
+	err := engine.Render(&buf, "admin", map[string]any{
 		"User": "admin",
 	})
 	if err != nil {
@@ -77,7 +76,7 @@ func Test_AddFunc(t *testing.T) {
 
 	// Func is not admin
 	buf.Reset()
-	err = engine.Render(&buf, "admin", map[string]interface{}{
+	err = engine.Render(&buf, "admin", map[string]any{
 		"User": "john",
 	})
 	if err != nil {
@@ -93,15 +92,15 @@ func Test_AddFunc(t *testing.T) {
 
 func Test_AddFuncMap(t *testing.T) {
 	// Create a temporary directory
-	dir, _ := ioutil.TempDir(".", "")
+	dir, _ := os.MkdirTemp(".", "")
 	defer os.RemoveAll(dir)
 
 	// Create a temporary template file.
-	_ = ioutil.WriteFile(dir+"/func_map.html", []byte(`<h2>{{lower .Var1}}</h2><p>{{upper .Var2}}</p>`), 0700)
+	_ = os.WriteFile(dir+"/func_map.html", []byte(`<h2>{{lower .Var1}}</h2><p>{{upper .Var2}}</p>`), 0700)
 
 	engine := New(dir, ".html")
 
-	fm := map[string]interface{}{
+	fm := map[string]any{
 		"lower": func(s string) string {
 			return strings.ToLower(s)
 		},
@@ -117,7 +116,7 @@ func Test_AddFuncMap(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	engine.Render(&buf, "func_map", map[string]interface{}{
+	engine.Render(&buf, "func_map", map[string]any{
 		"Var1": "LOwEr",
 		"Var2": "upPEr",
 	})
